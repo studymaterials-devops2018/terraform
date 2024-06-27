@@ -218,6 +218,14 @@ func TestApplyWithMovedResource(t *testing.T) {
 	ctx := context.Background()
 	cfg := loadMainBundleConfigForTest(t, path.Join("state-manipulation", "moved"))
 
+	lock := depsfile.NewLocks()
+	lock.SetProvider(
+		addrs.NewDefaultProvider("testing"),
+		providerreqs.MustParseVersion("0.0.0"),
+		providerreqs.MustParseVersionConstraints("=0.0.0"),
+		providerreqs.PreferredHashes([]providerreqs.Hash{}),
+	)
+
 	planReq := PlanRequest{
 		Config: cfg,
 		ProviderFactories: map[addrs.Provider]providers.Factory{
@@ -230,6 +238,7 @@ func TestApplyWithMovedResource(t *testing.T) {
 					Build()), nil
 			},
 		},
+		DependencyLocks: *lock,
 
 		ForcePlanTimestamp: &fakePlanTimestamp,
 
