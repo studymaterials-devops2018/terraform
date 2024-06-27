@@ -20,6 +20,8 @@ import (
 
 	"github.com/hashicorp/terraform/internal/addrs"
 	terraformProvider "github.com/hashicorp/terraform/internal/builtin/providers/terraform"
+	"github.com/hashicorp/terraform/internal/depsfile"
+	"github.com/hashicorp/terraform/internal/getproviders/providerreqs"
 	"github.com/hashicorp/terraform/internal/lang/marks"
 	"github.com/hashicorp/terraform/internal/providers"
 	"github.com/hashicorp/terraform/internal/stacks/stackaddrs"
@@ -38,7 +40,7 @@ func TestApplyWithRemovedResource(t *testing.T) {
 
 	ctx := context.Background()
 	cfg := loadMainBundleConfigForTest(t, path.Join("empty-component", "valid-providers"))
-
+	lock := depsfile.NewLocks()
 	planReq := PlanRequest{
 		Config: cfg,
 		ProviderFactories: map[addrs.Provider]providers.Factory{
@@ -46,6 +48,7 @@ func TestApplyWithRemovedResource(t *testing.T) {
 				return terraformProvider.NewProvider(), nil
 			},
 		},
+		DependencyLocks: *lock,
 
 		ForcePlanTimestamp: &fakePlanTimestamp,
 
@@ -402,6 +405,13 @@ func TestApplyWithSensitivePropagation(t *testing.T) {
 
 	changesCh := make(chan stackplan.PlannedChange)
 	diagsCh := make(chan tfdiags.Diagnostic)
+	lock := depsfile.NewLocks()
+	lock.SetProvider(
+		addrs.NewDefaultProvider("testing"),
+		providerreqs.MustParseVersion("0.0.0"),
+		providerreqs.MustParseVersionConstraints("=0.0.0"),
+		providerreqs.PreferredHashes([]providerreqs.Hash{}),
+	)
 	req := PlanRequest{
 		Config: cfg,
 		ProviderFactories: map[addrs.Provider]providers.Factory{
@@ -409,6 +419,7 @@ func TestApplyWithSensitivePropagation(t *testing.T) {
 				return stacks_testing_provider.NewProvider(), nil
 			},
 		},
+		DependencyLocks: *lock,
 
 		ForcePlanTimestamp: &fakePlanTimestamp,
 
@@ -446,6 +457,7 @@ func TestApplyWithSensitivePropagation(t *testing.T) {
 				return stacks_testing_provider.NewProvider(), nil
 			},
 		},
+		DependencyLocks: *lock,
 	}
 
 	applyChangesCh := make(chan stackstate.AppliedChange)
@@ -554,6 +566,13 @@ func TestApplyWithCheckableObjects(t *testing.T) {
 
 	changesCh := make(chan stackplan.PlannedChange)
 	diagsCh := make(chan tfdiags.Diagnostic)
+	lock := depsfile.NewLocks()
+	lock.SetProvider(
+		addrs.NewDefaultProvider("testing"),
+		providerreqs.MustParseVersion("0.0.0"),
+		providerreqs.MustParseVersionConstraints("=0.0.0"),
+		providerreqs.PreferredHashes([]providerreqs.Hash{}),
+	)
 	req := PlanRequest{
 		Config: cfg,
 		ProviderFactories: map[addrs.Provider]providers.Factory{
@@ -561,6 +580,7 @@ func TestApplyWithCheckableObjects(t *testing.T) {
 				return stacks_testing_provider.NewProvider(), nil
 			},
 		},
+		DependencyLocks: *lock,
 
 		ForcePlanTimestamp: &fakePlanTimestamp,
 
@@ -611,6 +631,7 @@ func TestApplyWithCheckableObjects(t *testing.T) {
 				return stacks_testing_provider.NewProvider(), nil
 			},
 		},
+		DependencyLocks: *lock,
 	}
 
 	applyChangesCh := make(chan stackstate.AppliedChange)
