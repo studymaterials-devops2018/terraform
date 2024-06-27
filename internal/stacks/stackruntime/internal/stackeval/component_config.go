@@ -415,10 +415,16 @@ func (c *ComponentConfig) neededProviderSchemas(ctx context.Context, phase EvalP
 			continue // not our job to report a missing provider
 		}
 
-		providerLockfileDiags := CheckProviderInLockfile(c.main.validating.opts.DependencyLocks, pTy, decl.DeclRange)
-		// We report these diagnostics in a different place
-		if providerLockfileDiags.HasErrors() {
-			return providerSchemas, diags, true
+		// If this phase has a dependency lockfile, check if the provider is in it.
+		depLocks := c.main.DependencyLocks(phase)
+		if depLocks != nil {
+			// Check if the provid
+			providerLockfileDiags := CheckProviderInLockfile(*depLocks, pTy, decl.DeclRange)
+
+			// We report these diagnostics in a different place
+			if providerLockfileDiags.HasErrors() {
+				return providerSchemas, diags, true
+			}
 		}
 
 		schema, err := pTy.Schema(ctx)
